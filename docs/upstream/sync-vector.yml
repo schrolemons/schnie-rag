@@ -1,0 +1,108 @@
+# 参考模板：放入.github/workflows之前必须配置来源、目标、Secrets和包管理器。
+# 当前文件位于docs，不会执行。
+name: Import Sites, Build Overview and Sync Vector DB
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/content/**'
+      - 'scripts/**'
+      - 'lib/**'
+      - 'overview.md'
+      - '.github/workflows/sync-vector.yml'
+      - 'package-lock.json'
+  workflow_dispatch:
+  repository_dispatch:
+    types: [source-content-updated]
+permissions:
+  contents: write
+concurrency:
+  group: rag-vector-sync
+  cancel-in-progress: false
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CONTENT_SOURCES_DIR: ${{ github.workspace }}/.sources
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/checkout@v4
+        with:
+          repository: example-owner/blog
+          ref: main
+          path: .sources/blog
+          persist-credentials: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /_config.yml
+            /source/**/*.md
+            /source/**/*.mdx
+      - uses: actions/checkout@v4
+        with:
+          repository: example-owner/docs
+          ref: main
+          path: .sources/docs
+          persist-credentials: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /_config.yml
+            /source/**/*.md
+            /source/**/*.mdx
+      - uses: actions/checkout@v4
+        with:
+          repository: example-owner/notes
+          ref: main
+          path: .sources/notes
+          persist-credentials: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /_config.yml
+            /source/**/*.md
+            /source/**/*.mdx
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run content:refresh
+      - run: npm run content:suggestions
+      - run: npm test
+      - run: npm run sync:vector:check
+      - name: Sync changed records
+        env:
+          UPSTASH_VECTOR_REST_URL: ${{ secrets.UPSTASH_VECTOR_REST_URL }}
+          UPSTASH_VECTOR_REST_TOKEN: ${{ secrets.UPSTASH_VECTOR_REST_TOKEN }}
+          UPSTASH_VECTOR_NAMESPACE: kb-demo
+          VECTOR_EMBEDDING_MODE: ${{ vars.VECTOR_EMBEDDING_MODE || 'upstash-data' }}
+          VECTOR_EMBEDDING_MODEL: ${{ vars.VECTOR_EMBEDDING_MODEL }}
+          VECTOR_EMBEDDING_DIMENSION: ${{ vars.VECTOR_EMBEDDING_DIMENSION }}
+          VECTOR_EMBEDDING_URL: ${{ vars.VECTOR_EMBEDDING_URL }}
+          VECTOR_EMBEDDING_API_KEY: ${{ secrets.VECTOR_EMBEDDING_API_KEY }}
+          VECTOR_RETRIEVAL_MODE: dense
+        run: npm run sync:vector
+      - name: Keep generated article cache and overview in launcher
+        run: |
+          node -e "const r=require('./.reports/vector-sync.json');if(r.pending)throw new Error('Embedding still pending; rerun this workflow before publishing the cache')"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- src/content overview.md src/launcher/generated/chat-suggestions.json
+          git add -f -- generated/source-manifest.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'chore: refresh site corpus and overview'
+            published=false
+            for attempt in 1 2 3; do
+              if git push origin HEAD:main; then published=true; break; fi
+              git fetch origin main
+              git rebase origin/main
+            done
+            if [ "$published" != true ]; then echo 'Generated cache push failed after retries'; exit 1; fi
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vector-sync-report
+          path: .reports/vector-sync.json
+          retention-days: 14

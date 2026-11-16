@@ -1,0 +1,65 @@
+[
+  {
+    "category": "blog",
+    "site": "blog",
+    "title": "检索与问答的边界",
+    "mode": "chat",
+    "question": "《检索与问答的边界》主要讲什么？"
+  },
+  {
+    "category": "blog",
+    "site": "blog",
+    "title": "检索与问答的边界",
+    "mode": "tutor",
+    "question": "请结合《检索与问答的边界》的原文，解释其中的关键概念。"
+  },
+  {
+    "category": "blog",
+    "site": "blog",
+    "title": "检索与问答的边界",
+    "mode": "scholar",
+    "question": "请核对《检索与问答的边界》的主要内容，标明原文依据与资料边界。"
+  },
+  {
+    "category": "docs",
+    "site": "docs",
+    "title": "开发文档维护指南",
+    "mode": "chat",
+    "question": "《开发文档维护指南》主要讲什么？"
+  },
+  {
+    "category": "docs",
+    "site": "docs",
+    "title": "开发文档维护指南",
+    "mode": "tutor",
+    "question": "请结合《开发文档维护指南》的原文，解释其中的关键概念。"
+  },
+  {
+    "category": "docs",
+    "site": "docs",
+    "title": "开发文档维护指南",
+    "mode": "scholar",
+    "question": "请核对《开发文档维护指南》的主要内容，标明原文依据与资料边界。"
+  },
+  {
+    "category": "notes",
+    "site": "notes",
+    "title": "Markdown索引笔记",
+    "mode": "chat",
+    "question": "《Markdown索引笔记》主要讲什么？"
+  },
+  {
+    "category": "notes",
+    "site": "notes",
+    "title": "Markdown索引笔记",
+    "mode": "tutor",
+    "question": "请结合《Markdown索引笔记》的原文，解释其中的关键概念。"
+  },
+  {
+    "category": "notes",
+    "site": "notes",
+    "title": "Markdown索引笔记",
+    "mode": "scholar",
+    "question": "请核对《Markdown索引笔记》的主要内容，标明原文依据与资料边界。"
+  }
+]

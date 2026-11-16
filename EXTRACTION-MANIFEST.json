@@ -1,0 +1,376 @@
+{
+  "source_repository": "https://github.com/schrolemons/launcher.github.io",
+  "source_commit": "d5cd1313689649764fec964d428dbbd7dc51369c",
+  "date": "2026-11-16",
+  "scope": "Whitelisted AI code and dependency closure; no original corpus, environment secrets, deployments or browser state",
+  "files": [
+    {
+      "path": ".github/workflows/sync-vector.yml",
+      "output_path": "docs/upstream/sync-vector.yml",
+      "source_sha256": "39b9370948dbca4d071086d27a43eadee7e2e878959c794203c9c84960b42dab",
+      "public_sha256": "78a19dd73666b219b2a8f7341d3c530ebe30887159f8d92a2290216b26cc43af",
+      "adapted": true
+    },
+    {
+      "path": "LICENSE",
+      "output_path": "LICENSE",
+      "source_sha256": "30c2c7ee3285fc02dca2f08a6f35f9b629ee879f9a2ff39a9c373f89443065ac",
+      "public_sha256": "30c2c7ee3285fc02dca2f08a6f35f9b629ee879f9a2ff39a9c373f89443065ac",
+      "adapted": false
+    },
+    {
+      "path": "api/chat.js",
+      "output_path": "api/chat.js",
+      "source_sha256": "9ec96e5bf39d27f6294842bc28145988f3c09100fa1721453a8977410f9e18eb",
+      "public_sha256": "976ac18932203e9a944b0aedd8450361e79c04c421fdf66c5c2e8e2267e54125",
+      "adapted": true
+    },
+    {
+      "path": "api/content-update.js",
+      "output_path": "api/content-update.js",
+      "source_sha256": "1c3b945724a92fc9d7c38fd98c29f6aba64d18175a7fe0b980449e7c7c07dae6",
+      "public_sha256": "d0636782aa07e4e6d4472ef520af9fc5940f90979ceca74b5db4cade4bd28664",
+      "adapted": true
+    },
+    {
+      "path": "api/knowledge.js",
+      "output_path": "api/knowledge.js",
+      "source_sha256": "4b2eb9973c3be08e8afd0464ef5701bd3897867ed2a4652636e1778f8a9b9366",
+      "public_sha256": "9712c98117746ff65cb5503b021ed9659e0d6bf4ab1dd789b94fc3c3a1bf28c8",
+      "adapted": true
+    },
+    {
+      "path": "docs/content-pipeline.md",
+      "output_path": "docs/content-pipeline.md",
+      "source_sha256": "ea2e238458810ce396ad50782942cbd60b6d4cc3552f7cb83f8f08d663313943",
+      "public_sha256": "6cd84ddcfb62b71597a70c928a1108a63e4d8a5a40831130dca750ff586df239",
+      "adapted": true
+    },
+    {
+      "path": "docs/world-terminal.md",
+      "output_path": "docs/world-terminal.md",
+      "source_sha256": "0ef79642f0b0aa7eb9c0ab9f0536898c19bdf5e3767777846cfc2a393004e7e6",
+      "public_sha256": "7af57b8dba2b46cbff42fd11ae4c0ea2849efd40c8413b9c1f6acb84f86aafc5",
+      "adapted": true
+    },
+    {
+      "path": "lib/content-classification.js",
+      "output_path": "lib/content-classification.js",
+      "source_sha256": "20482a88904c7a22aed40f6294d10fca92191a4517c64f72e1b2738c6fb2e2b8",
+      "public_sha256": "354b1e73799d4062f13bebc686accc36c25ebb6c8d1cad97426b39105107b0cb",
+      "adapted": true
+    },
+    {
+      "path": "lib/content-locations.js",
+      "output_path": "lib/content-locations.js",
+      "source_sha256": "d48b3196c609788b2ca4b172b10e625e149d3ddcf8793a0aa351e11f2b5d626d",
+      "removed_from_public_release": true
+    },
+    {
+      "path": "lib/overview-contract.js",
+      "output_path": "lib/overview-contract.js",
+      "source_sha256": "c0178f57086afae44844f11cb7f7b7dc38435834c83584be153fbb5b43bbcd6e",
+      "public_sha256": "9456b63959b02d9ca87ad430de24d7b2b3b22718f972f2996b76216cba5ff3e6",
+      "adapted": true
+    },
+    {
+      "path": "lib/retrieval-text.js",
+      "output_path": "lib/retrieval-text.js",
+      "source_sha256": "9bbc99cf1cb652dfc5dc0942bc53bbc715d85415676ba6319165272ced4eb50f",
+      "public_sha256": "e91fd281aedddc4002a40c8d0ec75b877872e2e20ebca790c3f719d9d2e31987",
+      "adapted": true
+    },
+    {
+      "path": "lib/source-sites.js",
+      "output_path": "lib/source-sites.js",
+      "source_sha256": "2728acc5579b805e470624651c168b22e63022d5d94bdf78f4b70e7f1219c427",
+      "public_sha256": "ac4992bb3d0f4a24808d313a1fc636ed62f64c977881eae2191a38be800db2f1",
+      "adapted": true
+    },
+    {
+      "path": "scripts/content-overview.js",
+      "output_path": "scripts/content-overview.js",
+      "source_sha256": "a331f4250f744130f78065ccf43d94f08030a14da184d928f128d999b4e34006",
+      "public_sha256": "b16294ae4f927f3f832e911d16ca084322115fdd19e829e991925db17a5a5ac8",
+      "adapted": true
+    },
+    {
+      "path": "scripts/content-overview.test.js",
+      "output_path": "scripts/content-overview.test.js",
+      "source_sha256": "0538cc8bd293f1e3f9f59bd71397c72a5b678cf3071c616a94a1d019cd35e70f",
+      "public_sha256": "aa9fe02554ff61c5f06cd72d5a2d07168eba29f5047b1d2c02c292882fcaf431",
+      "adapted": true
+    },
+    {
+      "path": "scripts/generate-chat-suggestions.js",
+      "output_path": "scripts/generate-chat-suggestions.js",
+      "source_sha256": "3d2a2da52bc3c0ee9c8e16e5ac5afd0052d0e06e094615b50f6f04b765561471",
+      "public_sha256": "56dd88a615582e70e7cb0b584d8b78da8b16cfe964dc822e5ef97e7fbf1b0b41",
+      "adapted": true
+    },
+    {
+      "path": "scripts/import-sites.js",
+      "output_path": "scripts/import-sites.js",
+      "source_sha256": "1d7d8da064dee53a448c8efeda555dafeea6fcb23c7e80a0dbc2dcf44038e7dd",
+      "public_sha256": "d7f4d15a6d678a8e6fd84eb0960486c0ed0a553adc3c8eb76a9ed713b0583105",
+      "adapted": true
+    },
+    {
+      "path": "scripts/refresh-content.js",
+      "output_path": "scripts/refresh-content.js",
+      "source_sha256": "8919622bc173236db391342cfa2f8b31013b727904ce41b087faa43aa69356f5",
+      "public_sha256": "bcc2cefb9ba1a615dc655a13531066fe86fe9a30e51ad63aeadc7e9560df7979",
+      "adapted": true
+    },
+    {
+      "path": "scripts/sync-vector.js",
+      "output_path": "scripts/sync-vector.js",
+      "source_sha256": "3425f96d0857ba7b3cfb05d036242afff6425ab7f9685e9e5b0a0046035361c3",
+      "reason": "新增--local-content可选分支；保留原默认三站采集逻辑",
+      "public_sha256": "325fbb3bdff230b38c061d5cd12500c36e4ab81b759b4fc69df959f53e838d66",
+      "adapted": true
+    },
+    {
+      "path": "scripts/vector-content.js",
+      "output_path": "scripts/vector-content.js",
+      "source_sha256": "fdfd95776f0438b8fbefa9188b206afb3c22c845ce002dcfc677817e31d5cdd8",
+      "public_sha256": "876fdad347d52eaf9faefad881ad29fafef2d1004121ecde34e10b4cd1246cea",
+      "adapted": true
+    },
+    {
+      "path": "scripts/vector-content.test.js",
+      "output_path": "scripts/vector-content.test.js",
+      "source_sha256": "93058be2ee97a33711e4ba38d2a077eb7116dfefe206d15bb62a724f945609dd",
+      "public_sha256": "c03cd177a53877d191270cd2155d08f85db53d7712bed0e40cf4550bde69df3e",
+      "adapted": true
+    },
+    {
+      "path": "scripts/vector-sync.js",
+      "output_path": "scripts/vector-sync.js",
+      "source_sha256": "c16cf3a48eb344ecb3afba58bacc2a00c7a1c01ed9431bf3ebe3df6a214f8bc0",
+      "public_sha256": "3e0896a98dbfe2dc6de3d9b229af2113221aa1146ba52d02f573cb6341a3c1fd",
+      "adapted": true
+    },
+    {
+      "path": "scripts/vector-sync.test.js",
+      "output_path": "scripts/vector-sync.test.js",
+      "source_sha256": "0321e24463c8ae82ea6d3827208683b69c1d75dbc53ba7d37543c0b3f32a1d0e",
+      "public_sha256": "959295528a24fc344b13bd797d76d0c40a37361b07adbe9f79b2e408fb23b656",
+      "adapted": true
+    },
+    {
+      "path": "server/chat-policy.js",
+      "output_path": "server/chat-policy.js",
+      "source_sha256": "d2bd830ba404ca0b4d28671460ab1d281516e841a81cf2f84ef01db0e980a9a8",
+      "public_sha256": "407c73e5111ea28b7823ccaaa34dc241448dc57f5cad163a8560cf36350ce23d",
+      "adapted": true
+    },
+    {
+      "path": "server/content-overview.js",
+      "output_path": "server/content-overview.js",
+      "source_sha256": "8f3b8e1be9e885c061a46c8651314d073058bec32a842a65fd809cc20d243b82",
+      "public_sha256": "e137134881761d799693461560f0fc999738eb918ccaf7cb5b2cec85671b573a",
+      "adapted": true
+    },
+    {
+      "path": "server/embedding.js",
+      "output_path": "server/embedding.js",
+      "source_sha256": "ab6423c9fdec9cad3a0b0da77941b48d73444afcf9f4bc16b192fa73850041e7",
+      "public_sha256": "8d88467221d1b8289f8217bab2400a543f1e6a38f2ae8e1527f0723c54fa0693",
+      "adapted": true
+    },
+    {
+      "path": "server/embedding.test.js",
+      "output_path": "server/embedding.test.js",
+      "source_sha256": "9d6bb5375f58533c3719d43d0ce5a22bf656fd571fb122c82dd3901acb06c745",
+      "public_sha256": "5a537115d31e46aecfd778f79bdc0400ec2aadd476087e81334f17d1ec8db9c4",
+      "adapted": true
+    },
+    {
+      "path": "server/retrieval.js",
+      "output_path": "server/retrieval.js",
+      "source_sha256": "8a43f7fd7c9918523683e3382f8f861d86e51ef2b014f68851f3d7f501a0607f",
+      "public_sha256": "7164ea07d700d3a00f210ee768563b686cfbd10ef91804a8d44b4379baa61041",
+      "adapted": true
+    },
+    {
+      "path": "src/launcher/components/ChatMarkdown.tsx",
+      "output_path": "src/launcher/components/ChatMarkdown.tsx",
+      "source_sha256": "e4faf68ab937ca2b1d8f66aca71ea5f40750f5dd8cf1076e737628061f5da767",
+      "public_sha256": "55f203cd21d92934e4d2345aee3c9eba75a40b07e596fa445130ba8c7363a5c9",
+      "adapted": true
+    },
+    {
+      "path": "src/launcher/components/LauncherIcon.tsx",
+      "output_path": "src/launcher/components/LauncherIcon.tsx",
+      "source_sha256": "9282878ec4482e141d5a2348f6ecaff1abf1a34c89d284f3253cb0a1255ff8a7",
+      "public_sha256": "9282878ec4482e141d5a2348f6ecaff1abf1a34c89d284f3253cb0a1255ff8a7",
+      "adapted": false
+    },
+    {
+      "path": "src/launcher/components/TerminalSelect.tsx",
+      "output_path": "src/launcher/components/TerminalSelect.tsx",
+      "source_sha256": "2e2b1eba2227ba098402f386e782f3f81e14e55d5d4b2ba64c5ba239f790f969",
+      "public_sha256": "61d8328518dfdfdf2db78311ebaf1cf6724524da744b8873d817e7a824d32234",
+      "adapted": true
+    },
+    {
+      "path": "src/launcher/components/TerminalStatus.tsx",
+      "output_path": "src/launcher/components/TerminalStatus.tsx",
+      "source_sha256": "790c636a7c0d36a0344a74a755a20b0ae676f651a47351847014816fe62a4814",
+      "public_sha256": "68ec58a46d042a228013e71070f867773a3b67575575cfdff6b2b7cc3e32a57b",
+      "adapted": true
+    },
+    {
+      "path": "src/launcher/components/WorldTerminal.test.tsx",
+      "output_path": "src/launcher/components/WorldTerminal.test.tsx",
+      "source_sha256": "a097d41fe66258c2ed0d69dd020c39737c53e17a195d202ac0a45cd445b1f233",
+      "reason": "BLOG只有一篇演示文章，相应推荐卡片断言由3调整为1",
+      "public_sha256": "0518941b20e0e00c45646093f6ce06e595938c2efb8b34b2145359a8f9676e7e",
+      "adapted": true
+    },
+    {
+      "path": "src/launcher/components/WorldTerminal.tsx",
+      "output_path": "src/launcher/components/WorldTerminal.tsx",
+      "source_sha256": "7899dba1ce65b4f3b5745f03217e4fa5b3d3e1dd3bee22bf378840006b7e9ed8",
+      "public_sha256": "d78f7d3c386bc459d72b12a45b61bc148ac27db53e064793125b41ed54a62e7c",
+      "adapted": true
+    },
+    {
+      "path": "src/launcher/generated/chat-suggestions.json",
+      "output_path": "src/launcher/generated/chat-suggestions.json",
+      "source_sha256": "cf3fa0e4c4f39f8488a20ca405b9b7c362245ffcf5282dca3d1d8cd4361fc4bd",
+      "reason": "由三篇虚构演示文章重新生成",
+      "public_sha256": "9dd2a7fafdc94dd245a4442d664296484fcc048e412ebf61c16e2e8f0c4f3687",
+      "adapted": true
+    },
+    {
+      "path": "src/launcher/terminal-control.test.ts",
+      "output_path": "src/launcher/terminal-control.test.ts",
+      "source_sha256": "a11d689b6d45f6a6cceb2387a3f1b1078c7f94d90977cac70077c7ddb27bdca1",
+      "public_sha256": "b3709fc384574523fe83abb6177b33f9856eaaedd01a6d2af41e113a0775564b",
+      "adapted": true
+    },
+    {
+      "path": "src/launcher/terminal-control.ts",
+      "output_path": "src/launcher/terminal-control.ts",
+      "source_sha256": "af88ccc280882471ba3d060069b3a919a417747e860ad303a31d2bafdd676ede",
+      "public_sha256": "af88ccc280882471ba3d060069b3a919a417747e860ad303a31d2bafdd676ede",
+      "adapted": false
+    },
+    {
+      "path": "src/launcher/terminal-sources.test.ts",
+      "output_path": "src/launcher/terminal-sources.test.ts",
+      "source_sha256": "929c39c442380dead3e4fff2db7172e879dcc05a248a4ed3a08577442f769a54",
+      "public_sha256": "e3e5761cd99484886f3ba82acb6b3e048137d2dff2aefa424a76c4c464c1bc5b",
+      "adapted": true
+    },
+    {
+      "path": "src/launcher/terminal-sources.ts",
+      "output_path": "src/launcher/terminal-sources.ts",
+      "source_sha256": "9f43af1c8647ec4ac54663b1fd2c2a6925cbfb9d70d4c60cbcf42bcfa52ad4f7",
+      "public_sha256": "dce1a468c5effac2e8ab965469a1cb02331a32ad2e296f0f1269d3bebf2abf51",
+      "adapted": true
+    },
+    {
+      "path": "src/launcher/terminal-stream.test.ts",
+      "output_path": "src/launcher/terminal-stream.test.ts",
+      "source_sha256": "b417466cd954437f94b6bf6ef129b6bb65ecfdf0fae407d84597953c17b75bf5",
+      "public_sha256": "093e966b8c36cc931309389083e0a7e4c91cc8f7fcaaf3f49565a0c74b5a7ba1",
+      "adapted": true
+    },
+    {
+      "path": "src/launcher/terminal-stream.ts",
+      "output_path": "src/launcher/terminal-stream.ts",
+      "source_sha256": "dcc16b749489cff14ea82412c72498e0c5957a5d78520109add587fa4996d378",
+      "public_sha256": "a7344cb8b9194a98cb1d74f224473c626a6f1b21fe47328de0ef46bdb8bebe80",
+      "adapted": true
+    },
+    {
+      "path": "src/launcher/test/setup.ts",
+      "output_path": "src/launcher/test/setup.ts",
+      "source_sha256": "5d9a88469d217ea2c1777a51bebb9061c3337f62f3bf28325747e80582feb76f",
+      "public_sha256": "58dbb7b9204d2b2d8faa1c16c2e53fc6e60534fb93a67a7cca2e27753e505572",
+      "adapted": true
+    },
+    {
+      "path": "src/launcher/turnstile.test.ts",
+      "output_path": "src/launcher/turnstile.test.ts",
+      "source_sha256": "7341ac819a5829003a50a6de55a6eea6f29ce30200cda531689777cbb9874129",
+      "public_sha256": "a3c3d69f3c0020c0e20c766e6ee97974d4263466fc8c3ad0825f19cc96a0ade2",
+      "adapted": true
+    },
+    {
+      "path": "src/launcher/turnstile.ts",
+      "output_path": "src/launcher/turnstile.ts",
+      "source_sha256": "89121f70980dac2d367b4d98519faa4ed5292eb20a97ae6f3ad6e3858dacba4d",
+      "public_sha256": "163809243abfc44a74e6120d00441534a62f439aa42c14c73e0cb7c9379b8760",
+      "adapted": true
+    },
+    {
+      "path": "src/launcher/world-terminal.css",
+      "output_path": "src/launcher/world-terminal.css",
+      "source_sha256": "e49101999fe1e92d9e6b83899e1c7dafa53ce9468f453104ec783b2d414a19d9",
+      "public_sha256": "e49101999fe1e92d9e6b83899e1c7dafa53ce9468f453104ec783b2d414a19d9",
+      "adapted": false
+    },
+    {
+      "path": "tests/chat-handler.test.js",
+      "output_path": "tests/chat-handler.test.js",
+      "source_sha256": "323bc89e3c5cbafd8e58797ba15acf02c1949cd66dcf450b242620958f73599a",
+      "public_sha256": "e7ad6f6e0367990d62eaa36637ede27b60b77e690a49a4b1ae3a663b3278371a",
+      "adapted": true
+    },
+    {
+      "path": "tests/chat-policy.test.js",
+      "output_path": "tests/chat-policy.test.js",
+      "source_sha256": "a47397a01f12d2b484d197f85ff209181ab44e0f4bf3395485a1c28afb03f59b",
+      "public_sha256": "de43c5001d7c084e1097bd7d901ba038afc0751f3e30bde12e6f88aed039e064",
+      "adapted": true
+    },
+    {
+      "path": "tests/content-update.test.js",
+      "output_path": "tests/content-update.test.js",
+      "source_sha256": "438769978dacda69641fa723613e0f6eb2767902ca9c6c6e2fa8f839f450616e",
+      "public_sha256": "dae60bf0c12610cd08d362f45ccd76677539be0c0a16d26d195b9b18190c93d4",
+      "adapted": true
+    },
+    {
+      "path": "tests/knowledge-handler.test.js",
+      "output_path": "tests/knowledge-handler.test.js",
+      "source_sha256": "e8a8557920965d2ef7af3f295c76b95a9116357e2e367b06612e8c481f2ace75",
+      "public_sha256": "d8108e1feff11737385fa7a61df7c69e0e1b8d09f9845c7c0918d036ed9677b9",
+      "adapted": true
+    },
+    {
+      "path": "vercel.json",
+      "output_path": "vercel.json",
+      "source_sha256": "d0c5cc2da43d96672f4c08d532ac089bc9e88d247884e0873fc381bb60b187e4",
+      "public_sha256": "c4b5133b0db19bb4cd970f622fff468d9372f82e7e686416959698b36f5406f0",
+      "adapted": true
+    }
+  ],
+  "verification": {
+    "syntax_files": 26,
+    "test_files": 14,
+    "tests_passed": 138,
+    "tests_failed": 0,
+    "vite_build": "passed",
+    "offline_sync": "passed; only local example files",
+    "offline_pipeline": "passed; mocked Redis/Vector/model",
+    "external_services": "not invoked",
+    "source_files": "All source hashes unchanged after extraction"
+  },
+  "public_release": {
+    "version": "0.2.0",
+    "purpose": "generic developer knowledge base",
+    "removed": [
+      "author-specific prompts",
+      "author-defined content-location and classification rules",
+      "author service defaults"
+    ],
+    "source_ids": "configured in lib/source-sites.js",
+    "namespace": "kb- prefix required"
+  },
+  "hash_note": "source_sha256 records historical provenance only; public_sha256 describes this sanitized snapshot. New standalone files are tracked by Git."
+}

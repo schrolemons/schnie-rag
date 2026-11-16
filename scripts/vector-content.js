@@ -1,0 +1,199 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { createHash } from 'node:crypto';
+import matter from 'gray-matter';
+import { SOURCE_IDS, SOURCE_NAMES } from '../lib/source-sites.js';
+import { normalizeContentMetadata } from '../lib/content-classification.js';
+
+export const NAMESPACE = 'kb-demo';
+export function prepareRecords(records, mode, embeddingIdentity = 'unconfigured') {
+  // The embedding fingerprint prevents vectors from different models from mixing
+  // while keeping all versions in the same Upstash namespace/database.
+  const fingerprint = digest(String(embeddingIdentity)).slice(0, 12);
+  const idMap = new Map(records.map(r => [r.id, `${mode}:${fingerprint}:${r.id}`]));
+  return records.map(r => {
+    const record = { id: idMap.get(r.id), data: r.data,
+      metadata: { ...r.metadata, retrievalMode: mode, embeddingIdentity: String(embeddingIdentity).slice(0, 160), previousId: idMap.get(r.metadata.previousId) || '', nextId: idMap.get(r.metadata.nextId) || '' } };
+    if (Buffer.byteLength(JSON.stringify(record.metadata)) > 48000) throw new Error(`元数据超过单条 48 KB 上限：${r.metadata.source}`);
+    return record;
+  });
+}
+export const categories = SOURCE_IDS;
+export const CATEGORY_NAMES = SOURCE_NAMES;
+export const digest = value => createHash('sha256').update(value).digest('hex');
+const textValue = (v, max = 180) => String(v ?? '').slice(0, max);
+const dateValue = v => v instanceof Date ? v.toISOString() : textValue(v, 60);
+const listValue = v => (Array.isArray(v) ? v.flat(Infinity) : v ? [v] : []).map(v => textValue(v, 60)).slice(0, 16);
+
+export function sourceUrl(frontmatter) {
+  const base = 'https://knowledge.example.com/';
+  try {
+    const value = frontmatter.url;
+    if (!value) return { url: base, urlKind: 'kb-home' };
+    const url = new URL(String(value), base);
+    if (url.protocol === 'https:' && !url.username && !url.password) return { url: url.href, urlKind: 'article' };
+  } catch { /* Invalid URLs fall back to an explicitly labelled launcher entry. */ }
+  return { url: base, urlKind: 'kb-home' };
+}
+
+export function articleRecords(raw, category, relativePath, origin = {}) {
+  raw = raw.replace(/\r\n/g, '\n');
+  if (!categories.includes(category)) throw new Error(`未知分类：${category}`);
+  const { data: fm, content } = matter(raw);
+  const configuredCategory = String(fm.category || category).trim().toLowerCase();
+  if (!categories.includes(configuredCategory)) throw new Error(`文章分类必须来自 lib/source-sites.js 中的来源ID：${relativePath}`);
+  if (fm.draft === true || fm.published === false || fm.private === true || fm.password || fm.encrypted === true) return [];
+  const sourceTitle = textValue(fm.title || path.basename(relativePath).replace(/\.mdx?$/i, ''), 120);
+  const source = relativePath.replaceAll('\\', '/');
+  const articleDefaults = normalizeContentMetadata({ category: configuredCategory, categoryName: CATEGORY_NAMES[configuredCategory], source, title: sourceTitle, ...sourceUrl(fm), ...origin });
+  const cleaned = content.replace(/<!--[\s\S]*?-->/g, '').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/{%[\s\S]*?%}/g, '').replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/\r/g, '');
+  const sections = [];
+  let headings = [], lines = [], fence = '';
+  const flush = () => { if (lines.join('\n').trim()) sections.push({ section: headings.filter(Boolean).join(' / '), text: lines.join('\n').trim() }); lines = []; };
+  for (const line of cleaned.split('\n')) {
+    const marker = line.match(/^\s*(`{3,}|~{3,})/);
+    if (marker) {
+      if (!fence) fence = marker[1];
+      else if (marker[1][0] === fence[0] && marker[1].length >= fence.length) fence = '';
+      lines.push(line); continue;
+    }
+    const heading = !fence && line.match(/^ {0,3}(#{1,6})\s+(.+?)\s*#*$/);
+    if (heading) { flush(); headings = headings.slice(0, heading[1].length - 1); headings[heading[1].length - 1] = heading[2]; }
+    else lines.push(line);
+  }
+  flush();
+  const records = [];
+  for (const [sectionIndex, item] of sections.entries()) {
+    const section = textValue(item.section, 220);
+    const headingPath = section.split(' / ').filter(Boolean);
+    const entry = textValue(item.section.split(' / ').at(-1) || articleDefaults.title, 160);
+    const identity = normalizeContentMetadata({ ...articleDefaults, headingPath, entry, section });
+    const effectiveCategory = identity.category;
+    const title = textValue(identity.title, 120);
+    const articleId = digest(`${effectiveCategory}:${source}:${title}`).slice(0, 24);
+    const labels = [...listValue(fm.categories), ...listValue(fm.tags), ...listValue(fm.aliases || fm.alias)].join(' / ').slice(0, 160);
+    const prefix = `${effectiveCategory.toUpperCase()} | ${title}\n站点：${origin.siteName || category.toUpperCase()}\n路径：${String(origin.sourcePath || source).slice(0, 240)}\n${section}\n${labels ? `主题：${labels}\n` : ''}`;
+    // Paragraph packing inside a heading; long paragraphs split at sentence boundaries.
+    const limit = 1500 - prefix.length;
+    const units = item.text.split(/\n\s*\n/).flatMap(paragraph => {
+      if (paragraph.length <= limit) return [paragraph];
+      return paragraph.match(/[^。！？!?\n]+[。！？!?\n]?|[。！？!?\n]/g) || [paragraph];
+    });
+    let buffer = '';
+    const emit = () => {
+      if (!buffer.trim()) return;
+      const metadata = { schema: 3, pipelineVersion: '2026-10-17.1', category: effectiveCategory, categoryName: identity.categoryName,
+        articleId, articleHash: digest(raw), source, title, slug: textValue(fm.slug || path.basename(relativePath).replace(/\.mdx?$/i, ''), 160),
+        abbrlink: textValue(fm.abbrlink, 100), section, headingPath,
+        entry, sectionIndex, sectionCount: sections.length,
+        author: textValue(fm.author, 100), publishedAt: dateValue(fm.date), updatedAt: dateValue(fm.updated),
+        aliases: listValue(fm.aliases || fm.alias), language: 'zh', format: /\.mdx$/i.test(relativePath) ? 'mdx' : 'markdown',
+        summary: textValue(fm.description || item.text.replace(/[`#*_]/g, '').replace(/\s+/g, ' '), 240),
+        summaryMethod: fm.description ? 'frontmatter-description' : 'source-excerpt',
+        articleCharacters: cleaned.length, sectionCharacters: item.text.length,
+        site: origin.site || category, siteName: origin.siteName || category.toUpperCase(),
+        sourcePath: origin.sourcePath || source, sourceRepository: origin.sourceRepository || '',
+        sourceUrl: origin.url || articleDefaults.url,
+        ...(fm.content_stats ? { contentStats: fm.content_stats } : {}),
+        url: identity.url, urlKind: identity.urlKind,
+        categories: listValue(fm.categories), tags: listValue(fm.tags), description: textValue(fm.description, 300),
+        chunkIndex: records.length, text: buffer.trim() };
+      const data = prefix + metadata.text;
+      const hash = digest(JSON.stringify({ data, metadata }));
+      records.push({ id: `${articleId}:${records.length}:${hash.slice(0, 16)}`, data, metadata: { ...metadata, hash } });
+      buffer = '';
+    };
+    for (const unit of units) {
+      let remaining = unit;
+      if (buffer && buffer.length + remaining.length + 2 > limit) emit();
+      while (remaining.length > limit) { buffer = remaining.slice(0, limit); emit(); remaining = remaining.slice(limit); }
+      if (buffer && buffer.length + remaining.length + 2 > limit) emit();
+      buffer += (buffer && !/[。！？!?]$/.test(buffer) ? '\n\n' : '') + remaining;
+    }
+    emit();
+  }
+  // Article hash and pipeline version make these relations stable for unchanged content.
+  const ids = records.map(r => r.id);
+  records.forEach((r, i) => {
+    Object.assign(r.metadata, { chunkCount: records.length, previousId: ids[i - 1] || '', nextId: ids[i + 1] || '',
+      relatedSections: sections.map(s => textValue(s.section, 220)).filter(s => s && s !== r.metadata.section).slice(0, 12),
+      contentHash: digest(r.metadata.text), articleHash: digest(raw), characterCount: r.metadata.text.length });
+  });
+  return records;
+}
+
+export function markdownFilesUnder(root) {
+  if (!fs.existsSync(root)) return [];
+  const files = [];
+  const walk = current => {
+    for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+      if (entry.name.startsWith('.') || entry.isSymbolicLink()) continue;
+      const full = path.join(current, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (/\.mdx?$/i.test(entry.name)) files.push(full);
+    }
+  };
+  walk(root);
+  return files.sort((a, b) => path.relative(root, a).localeCompare(path.relative(root, b), 'en'));
+}
+
+export function readSourceOrigins(root) {
+  const file = path.resolve(root, '../../generated/source-manifest.json');
+  return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')).articles || {} : {};
+}
+
+export function collectRecords(root) {
+  const records = [];
+  const origins = readSourceOrigins(root);
+  let articles = 0;
+  for (const folder of ['posts', ...categories]) {
+    const dir = path.join(root, folder);
+    for (const full of markdownFilesUnder(dir)) {
+      // Nested folders organize source files only. The first directory under
+      // src/content owns the configured source classification.
+      const relative = `${folder}/${path.relative(dir, full).replaceAll('\\', '/')}`;
+      const result = articleRecords(fs.readFileSync(full, 'utf8'), folder === 'posts' ? categories[0] : folder, relative, origins[relative]);
+      if (result.length) articles++;
+      records.push(...result);
+    }
+  }
+  return { records, articles };
+}
+
+export function capacityPlan(info, additions, newCount, requestEstimate = 0) {
+  // Conservative local guardrails, not provider quotas or current public pricing.
+  const limit = (name, fallback) => {
+    const value = Number(process.env[name] || fallback);
+    if (!Number.isSafeInteger(value) || value <= 0) throw new Error(`Invalid capacity limit: ${name}`);
+    return value;
+  };
+  const recordLimit = limit('VECTOR_MAX_RECORDS', 98000), storageLimit = limit('VECTOR_MAX_STORAGE_BYTES', 700000000),
+    requestLimit = limit('VECTOR_MAX_SYNC_REQUESTS', 14000), bandwidthLimit = limit('VECTOR_MAX_SYNC_TRANSFER_BYTES', 35000000000);
+  if (![info.vectorCount, info.indexSize, info.dimension].every(Number.isFinite)) throw new Error('无法读取容量信息，停止同步');
+  const addedBytes = additions.reduce((n, r) => n + Buffer.byteLength(JSON.stringify(r)) * 2 + info.dimension * 4 + 1024, 0);
+  const plan = { recordLimit, storageLimit, requestLimit, bandwidthLimit,
+    peakRecords: info.vectorCount + (Number(info.pendingVectorCount) || 0) + newCount, estimatedPeakBytes: info.indexSize + addedBytes, requestEstimate, transferEstimate: addedBytes };
+  if (plan.peakRecords > recordLimit || plan.estimatedPeakBytes > storageLimit || requestEstimate > requestLimit || addedBytes > bandwidthLimit) throw new Error('容量计划超过配置的本地保护阈值，停止同步；请检查报告和服务商Dashboard');
+  return plan;
+}
+
+export function recommendations(records) {
+  const seen = new Set();
+  const articles = records.filter(({ metadata: m }) => {
+    const key = `${m.site || m.category}:${m.category}:${m.title}`;
+    if (!m.title || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  const prompts = {
+    chat: title => `《${title}》主要讲什么？`,
+    tutor: title => `请结合《${title}》的原文，解释其中的关键概念。`,
+    scholar: title => `请核对《${title}》的主要内容，标明原文依据与资料边界。`,
+  };
+  return categories.flatMap(site => articles.filter(r => (r.metadata.site || r.metadata.category) === site)
+    .sort((a, b) => Number(b.metadata.category === site) - Number(a.metadata.category === site)).slice(0, 6)
+    .flatMap(({ metadata: m }) => Object.entries(prompts).map(([mode, question]) => ({
+      category: m.category, site, title: m.title, mode, question: question(m.title),
+    }))));
+}

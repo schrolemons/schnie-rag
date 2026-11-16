@@ -1,0 +1,55 @@
+{
+  "name": "schnie-rag",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Reusable Markdown RAG with streaming answers, source citations and signed content updates",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.19"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server/local-server.mjs",
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "test": "vitest run",
+    "check": "node scripts/check.mjs",
+    "content:overview": "node scripts/content-overview.js",
+    "content:suggestions": "node scripts/generate-chat-suggestions.js",
+    "content:refresh": "node scripts/refresh-content.js",
+    "sync:vector:check": "node scripts/sync-vector.js --local-content --dry-run",
+    "sync:vector": "node --env-file-if-exists=.env scripts/sync-vector.js --local-content",
+    "demo:offline": "node scripts/demo-offline.mjs",
+    "prebuild": "npm run content:overview && npm run content:suggestions",
+    "privacy:check": "node scripts/check-public.mjs",
+    "content:import": "node scripts/import-sites.js",
+    "privacy:history": "node scripts/check-public.mjs --history"
+  },
+  "dependencies": {
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.38.4",
+    "@upstash/vector": "^1.2.3",
+    "gray-matter": "^4.0.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remark-gfm": "4.0.1",
+    "remark-parse": "11.0.0",
+    "unified": "11.0.5"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
+    "jsdom": "^30.0.1",
+    "vite": "8.3.8",
+    "vitest": "5.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/schrolemons/schnie-rag.git"
+  },
+  "homepage": "https://github.com/schrolemons/schnie-rag#readme",
+  "bugs": {
+    "url": "https://github.com/schrolemons/schnie-rag/issues"
+  }
+}

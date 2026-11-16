@@ -1,0 +1,15 @@
+import {EventEmitter} from 'node:events';import {randomUUID} from 'node:crypto';
+import {createChatHandler} from '../api/chat.js';
+import {articleRecords,prepareRecords} from './vector-content.js';
+import fs from 'node:fs';
+const raw=fs.readFileSync(new URL('../src/content/blog/source/_posts/demo.md',import.meta.url),'utf8');
+const records=prepareRecords(articleRecords(raw,'blog','source/_posts/demo.md'),'dense','offline-demo');
+const redis={set:async()=> 'OK',eval:async()=>1};const limiter={limit:async()=>({success:true})};
+const index={query:async()=>records.map(r=>({...r,score:.95})),fetch:async ids=>records.filter(r=>ids.includes(r.id))};
+const mockFetch=async()=>new Response('data: '+JSON.stringify({choices:[{delta:{content:'这是离线流程演示：检索先返回相关原文，再由模型组织回答。［1］'}}]})+'\n\ndata: [DONE]\n\n',{headers:{'content-type':'text/event-stream'}});
+const handler=createChatHandler(()=>({redis,index,minute:limiter,daily:limiter}),mockFetch,()=> '离线演示共1篇虚构示例文章。');
+const req=new EventEmitter();Object.assign(req,{method:'POST',headers:{'content-type':'application/json',host:'127.0.0.1:8787'},socket:{remoteAddress:'127.0.0.1'},body:{requestId:randomUUID(),messages:[{role:'user',content:'检索与问答有什么关系？'}]}});
+const res=new EventEmitter();let output='';Object.assign(res,{headersSent:false,writableEnded:false,destroyed:false,setHeader(){},status(n){this.statusCode=n;return this;},json(v){output+=JSON.stringify(v);this.writableEnded=true;},write(v){this.headersSent=true;output+=v;return true;},end(){this.writableEnded=true;}});
+await handler(req,res);
+if(res.statusCode!==200||!output.includes('event: sources')||!output.includes('[DONE]'))throw Error('离线链路验证失败：'+output);
+console.log('OFFLINE DEMO：使用模拟Redis、向量库与模型；没有外部调用，也不代表真实检索质量。\n'+output);
