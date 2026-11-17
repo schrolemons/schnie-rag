@@ -1,5 +1,9 @@
 # Markdown RAG Starter
 
+![项目封面](docs/assets/project-cover.png)
+
+[维护与检查](docs/MAINTENANCE.md) · [问题反馈](https://github.com/schrolemons/schnie-rag/issues)
+
 把自己的Markdown资料接成带来源的知识库问答。项目包含文档分块、向量检索、流式模型回答、React聊天界面、只读检索接口，以及签名Webhook驱动的内容更新入口。默认资料是虚构的开发文档，不依赖作者原站点或已有知识库。
 
 ## 先运行本地示例
@@ -97,7 +101,7 @@ flowchart LR
   I --> V[新向量就绪后清理旧版本]
 ```
 
-仓库没有启用Actions。`docs/upstream/sync-vector.yml`只是参考模板，不会执行；有自动更新需求时，部署者需先配置来源、分支、目标、Secrets和权限，再自行采用。Webhook目标未配置时返回503，不会派发到原作者仓库。
+仓库的CI只运行本地检查、隔离测试、离线演示和前端构建，不读取部署Secrets，也不执行正式入库。`docs/upstream/sync-vector.yml`仍只是参考模板，不会执行；有自动更新需求时，部署者需先配置来源、分支、目标、Secrets和权限，再自行采用。Webhook目标未配置时返回503，不会派发到原作者仓库。
 
 Vercel使用`npm run build`、输出`dist`，根目录`api/`承载后端；环境变量在自己的部署中设置。更详细的来源采集、签名更新和验证边界见[内容流水线](docs/content-pipeline.md)、[本地与部署](docs/world-terminal.md)、[验证记录](VALIDATION.md)。
 
