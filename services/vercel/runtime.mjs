@@ -2,9 +2,10 @@ import http from 'node:http';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createChatHandler } from './chat-handler.mjs';
+import { createEvidenceHandler } from './evidence-handler.mjs';
 import contentUpdate from '../../api/content-update.js';
 /** Executes the same Vercel handlers in a clearly labelled local simulator. */
-export function createVercelRuntime({ chatHandler = createChatHandler() } = {}) {
+export function createVercelRuntime({ chatHandler = createChatHandler(),evidenceHandler=createEvidenceHandler() } = {}) {
   return http.createServer(async(req,res) => {
     res.status=code=>{res.statusCode=code;return res;};
     res.json=value=>{res.setHeader('Content-Type','application/json; charset=utf-8');res.end(JSON.stringify(value));return res;};
@@ -12,6 +13,7 @@ export function createVercelRuntime({ chatHandler = createChatHandler() } = {}) 
       const pathname=new URL(req.url,'http://localhost').pathname;
       if(pathname==='/health')return res.json({ok:true,role:'Vercel reference runtime',simulatedInfrastructure:['cloudflare-turnstile','redis','vercel-runtime'],externalServicesChecked:false});
       if(pathname==='/api/chat')return await chatHandler(req,res);
+      if(pathname==='/api/retrieve')return await evidenceHandler(req,res);
       if(pathname==='/api/content-update')return await contentUpdate(req,res);
       return res.status(404).json({code:'NOT_FOUND',message:'此参考后端没有聊天页面。'});
     } catch { if(!res.headersSent)res.status(503).json({code:'SERVICE_UNAVAILABLE'});else res.end(); }

@@ -1,5 +1,6 @@
 {
   "functions": {
-    "api/chat.js": { "includeFiles": "overview.md", "maxDuration": 60 }
+    "api/chat.js": { "includeFiles": "overview.md", "maxDuration": 60 },
+    "api/retrieve.js": { "includeFiles": "overview.md", "maxDuration": 30 }
   }
 }

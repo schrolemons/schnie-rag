@@ -9,24 +9,30 @@ import { createLlmClient } from './llm.mjs';
 import { readContentOverview } from '../../server/content-overview.js';
 import { withinDeadline } from '../../server/retrieval.js';
 
-let runtime;
+let runtime,evidenceRuntime;
 export function configuredRuntime(env = process.env) {
   if (env !== process.env) return makeRuntime(env);
   return runtime ||= makeRuntime(env);
 }
 function makeRuntime(env) {
+  return {...configuredEvidenceRuntime(env),generate:createLlmClient({endpoint:env.LLM_API_URL,apiKey:env.LLM_API_KEY,model:env.LLM_MODEL,thinkingMode:env.LLM_THINKING_MODE})};
+}
+export function configuredEvidenceRuntime(env=process.env){
+  if(env===process.env)return evidenceRuntime ||= makeEvidenceRuntime(env);
+  return makeEvidenceRuntime(env);
+}
+function makeEvidenceRuntime(env){
   if (!env.VERCEL_DEMO_API_KEY) throw new Error('VERCEL_SIMULATOR_NOT_CONFIGURED');
   return {
     accessKey: env.VERCEL_DEMO_API_KEY,
     turnstile: createTurnstileSimulator({ siteKey:env.CLOUDFLARE_TURNSTILE_SITE_KEY, secretKey:env.CLOUDFLARE_TURNSTILE_SECRET_KEY, demoToken:env.CLOUDFLARE_TURNSTILE_DEMO_TOKEN }),
     redis: createRedisSimulator({ key:env.REDIS_SIMULATOR_KEY }),
     retrieve: createVectorRetriever(env),
-    generate: createLlmClient({ endpoint:env.LLM_API_URL, apiKey:env.LLM_API_KEY, model:env.LLM_MODEL }),
     overview: readContentOverview,
   };
 }
-const equal = (a,b) => { const x=Buffer.from(String(a)),y=Buffer.from(String(b));return x.length===y.length&&timingSafeEqual(x,y); };
-async function readBody(req) {
+export const equal = (a,b) => { const x=Buffer.from(String(a)),y=Buffer.from(String(b));return x.length===y.length&&timingSafeEqual(x,y); };
+export async function readBody(req) {
   if (req.body && typeof req.body === 'object' && !Buffer.isBuffer(req.body)) {
     if (Buffer.byteLength(JSON.stringify(req.body)) > 16000) throw new Error('INPUT_INVALID');
     return req.body;
@@ -37,7 +43,7 @@ async function readBody(req) {
   if (Buffer.byteLength(text)>16000) throw new Error('INPUT_INVALID');
   try { return JSON.parse(text); } catch { throw new Error('INPUT_INVALID'); }
 }
-function json(res,status,code,message) { res.statusCode=status;res.setHeader('Content-Type','application/json; charset=utf-8');res.end(JSON.stringify({code,message})); }
+export function json(res,status,code,message) { res.statusCode=status;res.setHeader('Content-Type','application/json; charset=utf-8');res.end(JSON.stringify({code,message})); }
 export function createChatHandler(provide = configuredRuntime, { timeoutMs = 60000 } = {}) {
   return async (req,res) => {
     res.setHeader('Cache-Control','no-store');

@@ -8,7 +8,13 @@ import { createFixtureRuntime } from '../demo/fixture-runtime.mjs';
 const root=process.argv[2];
 if(!root)throw Error('Usage: node scripts/verify-dsh-plugin.mjs /path/to/sse-dsh-plugin');
 const pluginRoot=path.resolve(root);
-assert.deepEqual(fs.readFileSync(new URL('../protocol/info-card-v1.mjs',import.meta.url)),fs.readFileSync(path.join(pluginRoot,'protocol/info-card-v1.mjs')),'Protocol copies differ');
+for(const file of ['info-card-v1.mjs','evidence-v1.mjs','structured-answer.mjs'])assert.deepEqual(fs.readFileSync(new URL('../protocol/'+file,import.meta.url)),fs.readFileSync(path.join(pluginRoot,'protocol',file)),file+' copies differ');
+const {fetchEvidence}=await import(pathToFileURL(path.join(pluginRoot,'lib/evidence-client.mjs')).href);
+const {createVercelRuntime}=await import('../services/vercel/runtime.mjs');
+const {createEvidenceHandler}=await import('../services/vercel/evidence-handler.mjs');
+const retrieval=createVercelRuntime({evidenceHandler:createEvidenceHandler(()=>({accessKey:'fixture-only',turnstile:{verify:()=>({success:true}),fixtureToken:()=>''},redis:{acquire:()=>()=>{}},retrieve:async()=>[{id:'test-1',title:'Fixture',url:'https://docs.example.com/setup',text:'evidence only'}],overview:()=>''}))});
+retrieval.listen(0,'127.0.0.1');await once(retrieval,'listening');
+try{const result=await fetchEvidence({endpoint:'http://127.0.0.1:'+retrieval.address().port+'/api/retrieve',accessToken:'fixture-only'},'question');assert.equal(result.sources[0].text,'evidence only');}finally{await new Promise(resolve=>retrieval.close(resolve));}
 const {InfoCardAdapter}=await import(pathToFileURL(path.join(pluginRoot,'lib/native-adapter.mjs')).href);
 const server=createFixtureRuntime();server.listen(0,'127.0.0.1');await once(server,'listening');
 try{

@@ -51,3 +51,9 @@ data: {"request_id":"example-request-1","seq":3,"text_length":9,"card_count":1}
 仅展示used=true卡片，按order排序。正文可使用[1]等编号指向卡片。done.text_length是所有text_delta拼接后的Unicode码点数，card_count仅计used=true。最多10张卡片、64000个正文码点、1MiB响应；单个正文增量最长8192个UTF-16单元。流截断、重复卡片、编号跳跃、危险网址或计数不一致均不采纳卡片。
 
 RAG参考后端额外校验正文引用编号与模型采用声明一致，且卡片标题、网址来自本轮证据白名单。通用协议接收方只能校验数据结构，不能证明模型确实阅读或正确理解了来源。
+
+## 检索证据出口：info-card-evidence/1
+
+POST /api/retrieve使用相同的请求体与Bearer鉴权，返回application/json。字段为protocol="info-card-evidence"、version=1、request_id、sources和overview。sources为最多10项的{id,title,url,text}，单条text最多6000字符、合计60000字符，overview最多512KiB，整个响应最多1MiB。来源ID、标题、URL规则沿用上面的约束。该出口只检索，不调用LLM。
+
+DSH插件把原问题、检索证据与输出格式说明交给当前会话模型；模型返回{answer,info_card:[{id,used,order}]}。插件按本轮白名单补齐标题、URL和摘要，并校验正文引用顺序后展示。模型与思考设置由DSH原生选择管理。

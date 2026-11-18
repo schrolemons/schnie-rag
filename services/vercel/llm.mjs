@@ -1,11 +1,12 @@
 import { buildAnswerMessages } from './structured-answer.mjs';
-export function createLlmClient({ endpoint, apiKey, model, fetcher = fetch } = {}) {
+export function createLlmClient({ endpoint, apiKey, model, thinkingMode, fetcher = fetch } = {}) {
   if (!endpoint || !apiKey || !model) throw new Error('LLM_NOT_CONFIGURED');
+  if (thinkingMode && !['enabled','disabled'].includes(thinkingMode)) throw new Error('LLM_THINKING_MODE_INVALID');
   const url = new URL(endpoint);
   if ((url.protocol !== 'https:' && !(url.protocol === 'http:' && ['127.0.0.1','localhost','[::1]'].includes(url.hostname))) || url.username || url.password || url.search || url.hash) throw new Error('LLM_ENDPOINT_INVALID');
   return async ({ message, sources, overview, signal }) => {
     const response = await fetcher(url, { method: 'POST', headers: { 'Content-Type':'application/json', Authorization:`Bearer ${apiKey}` },
-      body: JSON.stringify({ model, messages: buildAnswerMessages(message,sources,overview), stream: false, temperature: 0.2, max_tokens: 4096, response_format: { type: 'json_object' } }), signal, redirect: 'error' });
+      body: JSON.stringify({ model, messages: buildAnswerMessages(message,sources,overview), stream: false, temperature: 0.2, max_tokens: 4096, response_format: { type: 'json_object' }, ...(thinkingMode ? {thinking:{type:thinkingMode}} : {}) }), signal, redirect: 'error' });
     if (!response.ok) { await response.body?.cancel(); throw new Error('LLM_UNAVAILABLE'); }
     if (!response.body) throw new Error('LLM_FORMAT_INVALID');
     const reader = response.body.getReader(), chunks = []; let bytes = 0;

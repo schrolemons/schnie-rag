@@ -15,3 +15,9 @@ it('响应超过上限时在读取阶段停止并取消流',async()=>{
 it('拒绝URL内凭据和非回环明文HTTP',()=>{
  for(const endpoint of ['https://' + 'user:password' + '@llm.example.com/','http://llm.example.com/'])expect(()=>createLlmClient({...options,endpoint})).toThrow('LLM_ENDPOINT_INVALID');
 });
+it('显式配置DeepSeek兼容思考模式，不将推理内容当作回答',async()=>{
+ const send=vi.fn(async()=>Response.json({choices:[{message:{content:'{"answer":"ok","info_card":[]}',reasoning_content:'must-not-be-used'}}]}));
+ const generate=createLlmClient({...options,thinkingMode:'disabled',fetcher:send});
+ await generate({message:'question',sources:[]});
+ expect(JSON.parse(send.mock.calls[0][1].body).thinking).toEqual({type:'disabled'});
+});
