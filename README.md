@@ -1,110 +1,85 @@
-# Markdown RAG Starter
+# Markdown向量问答：个人实现参考
 
-把自己的Markdown资料接成带来源的知识库问答。项目包含文档分块、向量检索、流式模型回答、React聊天界面、只读检索接口，以及签名Webhook驱动的内容更新入口。默认资料是虚构的开发文档，不依赖作者原站点或已有知识库。
+这是从个人网站中整理出的RAG后端示范，保留文档元数据、向量检索、受控模型调用与增量更新的实现思路。它不是开箱即用的产品：使用者需要配置自己的资料、Upstash Vector账号和LLM接口，并根据部署环境替换模拟基础设施。
 
-## 先运行本地示例
+项目不包含聊天页面，输入与输出独立于DSH及任何前端。命令行、HTTP调用方和可视化插件使用同一条处理链；其他前端只需消费公开的SSE协议。
 
-需要Node.js22.19以上与npm。以下操作不需要原作者的账号或服务。
+## 整体链路
+
+```text
+Markdown → 提取标题、路径、标签、关键词、字数与文章哈希
+         → 元数据总览 + 文档分块 → 真实Upstash Vector
+
+命令行或HTTP参数（message/request_id）
+  → Vercel处理入口
+  → Cloudflare Turnstile模拟验证
+  → Redis模拟协调：限流、去重、并发锁、保守预算预留
+  → Upstash Vector检索及相邻片段补取
+  → Vercel组织证据、拼接公开通用提示词、调用部署者配置的LLM
+  → 校验answer/info_card与本轮来源白名单
+  → 纯文本增量 + JSON来源（SSE），或命令行汇总JSON
+```
+
+三类基础机制均有独立目录。`services/cloudflare-turnstile`仅比对配置的演示令牌，不做人机识别；`services/redis`仅使用当前进程内存，不连接Redis，不提供跨实例原子性与持久化；`services/vercel`包含实际业务代码，本地由明确标记的Vercel模拟执行器运行。配置中的Key用于表达服务边界，不意味着已调用真实Cloudflare或Redis。服务端CLI调用可使用模拟验证器自己的演示令牌，此行为不能用于公开站点防机器人。
+
+只有Vector与LLM在正常问答路径中进行真实外部调用。缺少配置会报错，不回退到作者服务；离线示例显式注入替身。Upstash Vector存放向量和文章元数据，Redis模拟层只管理短期协调状态，两者职责不同。
+
+## 本地检查与离线示例
+
+需要Node.js22.19+：
 
 ```sh
-git clone https://github.com/schrolemons/schnie-rag.git
-cd schnie-rag
 npm ci
-npm run privacy:check
-npm run check
 npm test
+npm run check
 npm run sync:vector:check
 npm run demo:offline
-npm run build
+npm run privacy:check
+```
+
+`demo:offline`经过真实HTTP和业务函数，但Vector与LLM都是明确标注的测试替身，不连接云服务，不代表模型效果已经验证。项目没有UI，访问根路径返回404；`/health`只说明模拟执行器存活，不证明外部服务可用。
+
+需要持续运行供插件验收时，执行`npm run demo:serve`：回环接口为`http://127.0.0.1:8789/api/chat`，演示Bearer令牌为`offline-fixture-key`。此模式仍使用显式替身。两个仓库同时检出后，可运行`node scripts/verify-dsh-plugin.mjs /path/to/schnie-harness-plugin`核对协议副本与真实HTTP对接；它不读取任何DSH用户配置。
+
+## 配置真实Vector与LLM
+
+1. 复制`.env.example`为`.env`。设置Vercel入口访问令牌、模拟层配置，以及自己的LLM接口、Key和模型标识。
+2. 在自己的Upstash账号创建Dense向量索引，把REST URL和Token填入配置。选用支持托管文本嵌入的索引时使用`VECTOR_EMBEDDING_MODE=upstash-data`；自带Embeddings接口时选`external`，入库与查询必须使用相同模型、维度及模式。使用独立的`kb-`前缀namespace，避免影响其他应用资料。
+3. 调整`lib/source-sites.js`的来源定义；将已授权公开的Markdown放在`src/content/<来源ID>/`，frontmatter填写真实标题与HTTPS原文url。需要从仓库采集时按[内容链路](docs/content-pipeline.md)设置。
+4. 运行`npm run content:overview`与`npm run sync:vector:check`。确认范围后运行`npm run sync:vector`正式入库；此步骤产生真实外部写入和费用。
+5. 使用命令行或接口查询已知文章，检查答案、卡片原文和日志。仓库不附送真实账号、私有资料或生产凭据。
+
+## 输入与输出
+
+命令行直接传问题，无DSH或前端依赖：
+
+```sh
+npm run ask -- "文档如何组织？"
+npm run ask -- "文档如何组织？" --json
+```
+
+默认向标准输出写SSE；`--json`在完整校验后输出`{"answer":"...","info_card":[...]}`。CLI会启动临时回环Vercel模拟执行器并调用同一个处理函数，结束后关闭。
+
+需要供其他程序调用时：
+
+```sh
 npm start
 ```
 
-打开http://127.0.0.1:8787可以查看界面。`demo:offline`用真实业务函数配合明确的Redis、向量库和模型替身演示链路；未配置云服务时，正常问答和检索接口会报依赖未配置。能打开页面或通过`/health`不等于真实模型、数据库已经可用。
-
-开发时先启动`npm start`，再在另一终端执行`npm run dev`，访问http://127.0.0.1:5173。Vite代理API到8787，单独启动前端不会启动后端。
-
-## 接上自己的资料和服务
-
-1. 复制`.env.example`为`.env`，填写自己的Redis、Vector和模型凭据。示例默认使用DeepSeek生成接口；浏览器模型设置可为单次会话提供允许的其他兼容接口。
-2. 把已授权公开的Markdown放进`src/content/<来源ID>/`，删除三篇演示文章。每篇文章建议用frontmatter的`title`、HTTPS `url`指定真实标题和原文链接；不要用示例网址充当真实出处。
-3. `lib/source-sites.js`统一定义来源ID、名称、仓库、分支和站点网址。可增删来源；来源ID同时构成默认分类清单，frontmatter的`category`可在该清单中选择。不会按文章名称强制改写分类、作者或出处。
-4. Vector使用独立的`kb-`前缀分区；读写两端配置同一namespace。索引需启用兼容的托管嵌入，或明确配置外部Embeddings API及相同维度。同步保护阈值由`.env.example`中的`VECTOR_MAX_*`配置，不代表服务商套餐额度，应按自己的Dashboard调整。
-5. 先运行`npm run sync:vector:check`离线核对，再运行`npm run sync:vector`正式入库。正式同步会产生数据库和嵌入调用，并清理当前分区的旧版本；不要指向其他应用的生产分区。
-6. 执行`npm run build`并重启本地入口，先查询一段已知原文，再测试真实流式问答和来源链接。
-
-| 配置 | 职责 |
-| --- | --- |
-| `UPSTASH_REDIS_REST_URL/TOKEN` | 服务端限流、请求去重、并发锁、预算与短时缓存 |
-| `UPSTASH_VECTOR_REST_URL/TOKEN` | 服务端向量查询与入库；同步需要写权限 |
-| `UPSTASH_VECTOR_NAMESPACE` | 当前项目专用分区，示例为kb-demo |
-| `VECTOR_EMBEDDING_MODE` | upstash-data或external；与索引的嵌入方式配套 |
-| `VECTOR_EMBEDDING_MODEL/URL/API_KEY/DIMENSION` | 外部嵌入服务及维度；更换模型需要重新嵌入 |
-| `DEEPSEEK_API_KEY` | 默认生成模型凭据，仅服务端使用 |
-| `CHAT_ALLOWED_ORIGINS` | 浏览器允许来源，按实际前端域名配置 |
-| `CHAT_ALLOWED_MODEL_HOSTS` | 访客自定义模型接口的额外精确主机白名单 |
-| `CHAT_DAILY_REQUESTS / CHAT_DAILY_TOKEN_BUDGET` | 保守的全站请求和输入输出预算预留 |
-| `PUBLIC_TURNSTILE_SITE_KEY`、`TURNSTILE_SECRET_KEY` | 可选Cloudflare Turnstile，公开站点Key与服务端Secret需配套 |
-| `CHAT_SYSTEM_PROMPT` | 可选的部署者自定义说明，仅在服务端配置；不提交真实私有提示词 |
-
-除明确公开的构建变量外，凭据和私有说明不能使用`PUBLIC_`前缀。`.env`已忽略。模型Key只在当前页面内存保留，并随请求发给你部署的后端用于访问所选模型；检索插件不读取这个Key。
-
-## 完整链路
-
-```mermaid
-flowchart TD
-  U[浏览器问题与有限历史] --> C[可选Cloudflare Turnstile]
-  C --> A[Vercel或本地API]
-  A --> R[Redis限流/去重/并发锁/预算预留]
-  R --> V[Upstash Vector召回]
-  V --> N[相邻片段补取/过滤/去重]
-  N --> M[部署者选择的生成模型]
-  M --> S[SSE来源与正文]
-  S --> F[前端只展示实际引用的来源]
-  D[Markdown] --> B[分块/标题路径/来源/哈希]
-  B --> E[托管或外部嵌入]
-  E --> V
-```
-
-Cloudflare在本项目中负责可选的Turnstile验证；API运行在Vercel或本地Node，不要求Cloudflare Worker。Redis保存访问控制与短期状态，Vector保存嵌入和来源元数据，生成模型根据候选证据回答。分数是检索配置，不能作为事实准确率。
-
-## 给DSH插件复用
-
-`POST /api/knowledge`只做检索或读取总览，不调用生成模型。把自己的部署地址显式配置给[知识库检索插件](https://github.com/schrolemons/schnie-harness-plugin)即可：
+`POST http://127.0.0.1:8787/api/chat`，Content-Type为application/json，Authorization为`Bearer <VERCEL_DEMO_API_KEY>`，请求体：
 
 ```json
-{"operation":"search","query":"安装步骤","site":"all","mode":"chat"}
+{"message":"如何安装？","request_id":"client-request-1"}
 ```
 
-返回`schema:1`、请求ID、来源清单；每条来源有稳定的16位十六进制ID、title、HTTPS url和原文text。总览使用`operation:overview`。来源ID需与本项目配置一致，错误返回通用code和请求ID，不回显凭据或上游原始响应。
+返回[info-card-sse/1](docs/protocol.md)：meta、可选status、text_delta、info_card、done。来源卡片包含id、title、url、excerpt、used、order。只展示used=true的卡片，按order排序；没有引用也返回空数组。模型仅返回正文和来源ID/采用声明，标题、网址和摘要从检索证据中补齐，避免由模型杜撰链接。
 
-两仓库可放在同级目录，然后在本项目执行真实HTTP对接检查：
+本实现先等待LLM返回完整结构化JSON，通过合法性与来源校验后再分块发送。因此SSE是已验证结果的分块交付，不宣称上游模型逐token实时输出。插件可以消费真正逐token输出的其他服务，二者只共享协议。
 
-```sh
-node scripts/verify-plugin.mjs ../schnie-harness-plugin/lib/knowledge-client.js
-```
+## Vercel与内容更新
 
-该检查启动临时回环HTTP入口，真实解析插件请求和API响应，并验证问答SSE；外部Redis、Vector和模型使用显式替身，不代表云服务已验收。
+`api/chat.js`是Vercel入口，复用`services/vercel`业务代码。部署时选择无前端框架，Output Directory留空并设置自己的服务端环境变量。当前Cloudflare与Redis仍为模拟层，在多实例Vercel中状态不会共享，公开生产部署前需替换为真实基础设施；不能因代码放上云便宣称拥有全局限流或预算保障。
 
-## 内容更新和部署
+内容更新为：源仓库push → Vercel签名Webhook验签与来源白名单 → Redis模拟去重 → 向使用者指定仓库发送repository_dispatch → 使用者的采集任务读取源文档 → 重算统计与分块 → 新增/变化内容入库、确认可查询后清理当前分区旧版本。也可完全手动运行。详情见[内容链路](docs/content-pipeline.md)。仓库不启用任何自动Actions，docs中的工作流仅作参考。
 
-```mermaid
-flowchart LR
-  P[已配置来源仓库push] --> W[Webhook原始正文HMAC验签]
-  W --> Q[Redis去重]
-  Q --> G[显式目标repository_dispatch]
-  G --> J[部署者自行启用的同步任务]
-  J --> I[只读采集/统计/嵌入]
-  I --> V[新向量就绪后清理旧版本]
-```
-
-仓库没有启用Actions。`docs/upstream/sync-vector.yml`只是参考模板，不会执行；有自动更新需求时，部署者需先配置来源、分支、目标、Secrets和权限，再自行采用。Webhook目标未配置时返回503，不会派发到原作者仓库。
-
-Vercel使用`npm run build`、输出`dist`，根目录`api/`承载后端；环境变量在自己的部署中设置。更详细的来源采集、签名更新和验证边界见[内容流水线](docs/content-pipeline.md)、[本地与部署](docs/world-terminal.md)、[验证记录](VALIDATION.md)。
-
-## 隐私与边界
-
-当前公开版只带通用说明和合成资料，不预装个人提示词、聊天历史、角色设定、Cookie或作者服务凭据。`privacy:check`检查当前文件，`privacy:history`另外检查当前HEAD可达的Git历史；仅修改最新文件不能清除已公开的旧提交或旧发布包。扫描只报告路径和类别，不输出敏感值。
-
-只读检索接口默认是匿名公开接口，不能直接承载公司内部或私人资料；需要私有资料时，应在部署层增加认证、网络隔离与访问控制。Origin和Turnstile不是用户身份认证。模型可能误读资料，来源链接用于核对，项目不承诺零幻觉。
-
-项目从作者的公开launcher模块提取，仓库名与链接保留兼容；通用版默认行为独立于原知识库。保留上游MIT署名，详见[NOTICE](NOTICE.md)与[LICENSE](LICENSE)。
+若使用DSH插件，它只是此后端的一种可替换客户端；后端没有DSH依赖。其他SSE客户端或命令行同样可用。见[验证边界](VALIDATION.md)和[安全说明](SECURITY.md)。

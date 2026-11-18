@@ -51,10 +51,9 @@ export function withinDeadline(promise, signal) {
 }
 
 /** Shared bounded retrieval; category is semantic, site is the physical website. */
-export async function retrieveSources({ index, query, question = query, category = 'all', mode = 'chat', site = 'all', signal, onPhase = () => {} }) {
+export async function retrieveSources({ index, namespace = process.env.UPSTASH_VECTOR_NAMESPACE || 'kb-demo', query, question = query, category = 'all', mode = 'chat', site = 'all', signal, onPhase = () => {} }) {
   if (signal.aborted) throw new Error('Request expired');
   const retrieval = retrievalMode();
-  const namespace = process.env.UPSTASH_VECTOR_NAMESPACE || 'kb-demo';
   const queryPayload = embeddingMode() === 'external'
     ? { vector: (await withinDeadline(embedTexts([query], (url, options) => fetch(url, { ...options, signal })), signal))[0] }
     : { data: query };

@@ -97,7 +97,7 @@ export function articleRecords(raw, category, relativePath, origin = {}) {
         sourceUrl: origin.url || articleDefaults.url,
         ...(fm.content_stats ? { contentStats: fm.content_stats } : {}),
         url: identity.url, urlKind: identity.urlKind,
-        categories: listValue(fm.categories), tags: listValue(fm.tags), description: textValue(fm.description, 300),
+        categories: listValue(fm.categories), tags: listValue(fm.tags), keywords: listValue(fm.keywords), description: textValue(fm.description, 300),
         chunkIndex: records.length, text: buffer.trim() };
       const data = prefix + metadata.text;
       const hash = digest(JSON.stringify({ data, metadata }));

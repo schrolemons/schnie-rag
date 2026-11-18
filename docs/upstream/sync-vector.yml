@@ -68,7 +68,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run content:refresh
-      - run: npm run content:suggestions
+      - run: npm run content:overview
       - run: npm test
       - run: npm run sync:vector:check
       - name: Sync changed records
@@ -83,12 +83,12 @@ jobs:
           VECTOR_EMBEDDING_API_KEY: ${{ secrets.VECTOR_EMBEDDING_API_KEY }}
           VECTOR_RETRIEVAL_MODE: dense
         run: npm run sync:vector
-      - name: Keep generated article cache and overview in launcher
+      - name: Keep generated article cache and overview in the reference repository
         run: |
           node -e "const r=require('./.reports/vector-sync.json');if(r.pending)throw new Error('Embedding still pending; rerun this workflow before publishing the cache')"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- src/content overview.md src/launcher/generated/chat-suggestions.json
+          git add -- src/content overview.md
           git add -f -- generated/source-manifest.json
           if ! git diff --cached --quiet; then
             git commit -m 'chore: refresh site corpus and overview'

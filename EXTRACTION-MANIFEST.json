@@ -372,5 +372,6 @@
     "source_ids": "configured in lib/source-sites.js",
     "namespace": "kb- prefix required"
   },
-  "hash_note": "source_sha256 records historical provenance only; public_sha256 describes this sanitized snapshot. New standalone files are tracked by Git."
+  "hash_note": "source_sha256 records historical provenance only; public_sha256 describes this sanitized snapshot. New standalone files are tracked by Git.",
+  "manifest_note": "Historical extraction ledger for the initial 2026-11-16 snapshot; file paths and hashes are not a current inventory. Version 0.3.0 separates UI from Vercel processing, adds explicit infrastructure simulators and the SSE protocol."
 }

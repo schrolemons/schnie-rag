@@ -1,9 +1,9 @@
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
-import { Redis } from '@upstash/redis';
+import { createRedisSimulator } from '../services/redis/simulator.mjs';
 import { SOURCE_SITES } from '../lib/source-sites.js';
 
 let redis;
-function getRedis() { return redis ||= Redis.fromEnv(); }
+function getRedis() { return redis ||= createRedisSimulator({key:process.env.REDIS_SIMULATOR_KEY}); }
 async function readRaw(req) {
   const chunks = []; let bytes = 0;
   // Vercel exposes body as a lazy JSON getter. Do not access it before the raw stream.
@@ -17,8 +17,8 @@ async function readRaw(req) {
   return Buffer.concat(chunks);
 }
 export function createContentUpdateHandler({ fetcher = fetch,
-  reserve = async key => (await getRedis().set(key, 'pending', { nx: true, ex: 86400 })) === 'OK',
-  release = async key => getRedis().del(key),
+  reserve = async key => { try { const release=getRedis().acquire({client:'content-update',requestId:key,reservation:0});release();return true; } catch(error) {if(error.message==='DUPLICATE_REQUEST')return false;throw error;} },
+  release = async key => getRedis().forget(key),
 } = {}) {
   return async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
