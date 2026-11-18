@@ -1,6 +1,6 @@
 {
   "name": "schnie-rag",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "private": true,
   "type": "module",
   "description": "Personal Vercel RAG reference: simulated infrastructure, real configurable Vector, CLI and SSE output",

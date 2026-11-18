@@ -6,7 +6,10 @@ export function createLlmClient({ endpoint, apiKey, model, thinkingMode, fetcher
   if ((url.protocol !== 'https:' && !(url.protocol === 'http:' && ['127.0.0.1','localhost','[::1]'].includes(url.hostname))) || url.username || url.password || url.search || url.hash) throw new Error('LLM_ENDPOINT_INVALID');
   return async ({ message, sources, overview, signal }) => {
     const response = await fetcher(url, { method: 'POST', headers: { 'Content-Type':'application/json', Authorization:`Bearer ${apiKey}` },
-      body: JSON.stringify({ model, messages: buildAnswerMessages(message,sources,overview), stream: false, temperature: 0.2, max_tokens: 4096, response_format: { type: 'json_object' }, ...(thinkingMode ? {thinking:{type:thinkingMode}} : {}) }), signal, redirect: 'error' });
+      // Some compatible providers return null final content when JSON mode is
+      // combined with reasoning. Require JSON in the prompt and validate it at
+      // the handler boundary instead of forcing provider-specific JSON mode.
+      body: JSON.stringify({ model, messages: buildAnswerMessages(message,sources,overview), stream: false, temperature: 0.2, max_tokens: 4096, ...(thinkingMode ? {thinking:{type:thinkingMode}} : {}) }), signal, redirect: 'error' });
     if (!response.ok) { await response.body?.cancel(); throw new Error('LLM_UNAVAILABLE'); }
     if (!response.body) throw new Error('LLM_FORMAT_INVALID');
     const reader = response.body.getReader(), chunks = []; let bytes = 0;
